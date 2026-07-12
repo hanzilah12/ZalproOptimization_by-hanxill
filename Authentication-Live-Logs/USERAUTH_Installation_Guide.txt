@@ -1,0 +1,171 @@
+============================================================
+             USERAUTH - INSTALLATION & SETUP GUIDE
+        (FreeRADIUS Authentication Log Integration)
+============================================================
+
+Project Name:
+    USERAUTH
+
+Description:
+    USERAUTH is a FreeRADIUS Authentication Log integration project
+    that displays live user authentication logs inside the Radius
+    Manager user profile page.
+
+============================================================
+DIRECTORY STRUCTURE
+============================================================
+
+Main Project Directory (Root):
+
+    /zalpro-optimization/
+
+Web Directory (Only userlog.php):
+
+    /var/www/html/userlog.php
+
+NOTE:
+The main project directory MUST remain in the root (/).
+Only userlog.php belongs inside /var/www/html/.
+
+============================================================
+1. CREATE MAIN PROJECT DIRECTORY
+============================================================
+
+sudo mkdir -p /zalpro-optimization
+
+Set Ownership
+
+sudo chown -R www-data:www-data /zalpro-optimization
+
+Set Permissions
+
+sudo chmod -R 755 /zalpro-optimization
+
+============================================================
+2. CREATE WEB DIRECTORY
+============================================================
+
+Upload:
+
+    userlog.php
+
+to
+
+    /var/www/html/
+
+Upload:
+
+    auth-live-log.php
+
+to
+
+    /zalpro-optimization   
+
+Set Permissions
+
+sudo chown -R www-data:www-data /var/www/html/userlog.php
+sudo chown -R www-data:www-data /zalpro-optimization/auth-live-log.php
+sudo chmod -R 755 /var/www/html/userlog.php
+sudo chmod -R 755 /zalpro-optimization/auth-live-log.php
+
+============================================================
+3. FREERADIUS PERMISSION FIXES
+============================================================
+
+sudo usermod -aG freerad www-data
+
+sudo chmod 644 /var/log/freeradius/radius.log
+
+NOTE:
+Run this command again after every log rotation.
+
+sudo chmod 750 /var/log/freeradius/
+
+============================================================
+4. ENABLE AUTHENTICATION LOGGING
+============================================================
+
+Edit:
+
+sudo nano /etc/freeradius/3.0/radiusd.conf
+
+Inside:
+
+log {
+
+Enable:
+
+auth = yes
+auth_badpass = yes
+auth_goodpass = yes
+
+Save:
+CTRL+O
+ENTER
+
+Exit:
+CTRL+X
+
+Restart:
+
+sudo systemctl restart freeradius
+
+============================================================
+5. PROFILE PAGE INTEGRATION
+============================================================
+
+Edit:
+
+sudo nano /var/www/html/application/views/themes/legacy/admin_portal/users/profile.php
+
+Search:
+CTRL+W
+
+profileDocument.php
+
+Paste below it:
+
+# ------------------- AUTH LIVE LOG -----------------------------
+echo '<div class="row">';
+include '/ZalproOptimization/auth-live-log.php';
+echo '</div>';
+# -------------------------------------------------------------
+
+============================================================
+6. TROUBLESHOOTING
+============================================================
+
+A. Dashboard not showing live logs
+
+sudo tail -f /var/log/freeradius/radius.log
+
+
+B. SQL Error
+
+Unknown column 'disable_pool'
+
+mysql -u root -p
+
+USE zalpro;
+
+ALTER TABLE packages
+ADD COLUMN disable_pool VARCHAR(50) DEFAULT 'no';
+
+exit;
+
+sudo systemctl restart freeradius
+
+============================================================
+INSTALLATION CHECKLIST
+============================================================
+
+[ ] Main directory created
+[ ] Web directory created
+[ ] userlog.php uploaded
+[ ] Permissions configured
+[ ] Logging enabled
+[ ] Profile integrated
+[ ] SQL fix applied (if required)
+[ ] FreeRADIUS restarted
+
+============================================================
