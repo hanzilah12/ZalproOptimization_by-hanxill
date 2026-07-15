@@ -11,8 +11,14 @@ ________________
 2. One-Time Database Setup (Smart Triggers)
 Run these queries once on your MariaDB/MySQL database (radius). This setup is fully dynamic and does not need to be updated when you add new packages in the future.
 
+mysql -u root -p
+Enter Your Password:
 
 
+Copy And Paste The Following:
+
+-- --------------------------------------------------------------------------------------------------------------------------------------
+-- --------------------------------------------------------------------------------------------------------------------------------------
 
 USE radius;
 
@@ -77,23 +83,39 @@ END$$
 
 DELIMITER ;
 
+-- --------------------------------------------------------------------------------------------------------------------------------------
+-- --------------------------------------------------------------------------------------------------------------------------------------
+
 ________________
 3. Adding a New Package (Step-by-Step Workflow)
 Follow these steps whenever you create a new package on your network.
+
+-- --------------------------------------------------------------------------------------------------------------------------------------
 Step 1: Create Package in Billing Web GUI
 Create your new package (e.g., 20Mbps-JunOS) in the DMA Billing interface. Note the exact spelling.
+-- --------------------------------------------------------------------------------------------------------------------------------------
+
+-- --------------------------------------------------------------------------------------------------------------------------------------
 Step 2: Retrieve the Service ID (srvid)
 Log into your MariaDB terminal and run the following query to find the auto-generated ID for your package:
+
 USE radius;
 SELECT srvid, srvname FROM rm_services WHERE srvname LIKE '%20Mbps%';
 
 Example Output:
-srvid
-	srvname
- 
-	123
-	20Mbps-JunOS
-	In this example, the Service Name is 20Mbps-JunOS and the Service ID is 123.
+MariaDB [radius]> SELECT srvid, srvname FROM rm_services WHERE srvname LIKE '%20Mbps%';
++-------+------------------------------------+
+| srvid | srvname                            |
++-------+------------------------------------+
+|    14 | 20Mbps-(KTA)                       |
+|    27 | 20Mbps-Monthly[Fani]               |
+|    88 | 20Mbps-Monthly[Fani] ( FiberUser ) |
++-------+------------------------------------+
+3 rows in set (0.00 sec)
+
+-- --------------------------------------------------------------------------------------------------------------------------------------
+
+-- --------------------------------------------------------------------------------------------------------------------------------------
 Step 3: Map Speed Attributes in FreeRADIUS
 Run the SQL commands below to attach the BNG bandwidth parameters to both the Service Name and Service ID in the radgroupreply table.
 Juniper Speed Calculation Formula (Kbps): Mbps * 1024
@@ -108,16 +130,22 @@ Juniper Speed Calculation Formula (Kbps): Mbps * 1024
 USE radius;
 
 -- Clean up any existing mapping conflicts (Optional but recommended)
+-- Change Pkg-Name & svc-id Accordingly
+
 DELETE FROM radgroupreply WHERE groupname = '20Mbps-JunOS' OR groupname = '123';
 
 -- Map speed attributes to the Service Name (Required for active subscribers)
+-- Change 
+
 INSERT INTO radgroupreply (groupname, attribute, op, value) 
 VALUES ('20Mbps-JunOS', 'ERX-Service-Activate:1', '+=', 'svc-internet(20480,20480)');
 
 -- Map speed attributes to the Service ID (Safeguard fallback)
 INSERT INTO radgroupreply (groupname, attribute, op, value) 
 VALUES ('123', 'ERX-Service-Activate:1', '+=', 'svc-internet(20480,20480)');
+-- --------------------------------------------------------------------------------------------------------------------------------------
 
+-- --------------------------------------------------------------------------------------------------------------------------------------
 Step 4: Verification
 1. Assign the package to your subscriber (e.g., test-user) in the Web Panel.
 2. Verify database synchronization:
@@ -126,6 +154,8 @@ SELECT * FROM radusergroup WHERE username = 'test-user';
 clear pppoe user test-user
 4. Verify active rate limits on the BNG:
 run show subscribers username test-user
+-- --------------------------------------------------------------------------------------------------------------------------------------
+
 ________________
 4. Troubleshooting & Maintenance
    * Verify Radius Active Attributes (Debug Mode): Run /usr/local/sbin/radiusd -X and check if the Access-Accept packet contains:
