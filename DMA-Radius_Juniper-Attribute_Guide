@@ -125,8 +125,8 @@ Juniper Speed Calculation Formula (Kbps): Mbps * 1024
 * 20 Mbps = 20480 Kbps → (20480,20480)
 
 
-
-
+-- Paste The Following & Change The Pkg-Name & srv-id Accordingly
+-- --------------------------------------------------------------------------------------------------------------------------------------
 USE radius;
 
 -- Clean up any existing mapping conflicts (Optional but recommended)
