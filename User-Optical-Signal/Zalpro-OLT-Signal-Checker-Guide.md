@@ -20,9 +20,9 @@ This project integrates a **live optical signal checker** into the Zalpro Admin 
 
 ## ⚠️ Security Note (read before deploying)
 
-The scripts use **hardcoded credentials** (DB user/pass, OLT SSH user/pass) directly in `test_olt.py`. Keep this in mind:
+The scripts use **hardcoded credentials** (DB user/pass, OLT SSH user/pass) directly in `olt_checker.py`. Keep this in mind:
 
-- Set file permissions tightly: `chmod 750 /opt/test_olt.py` and restrict ownership to `root:www-data` or similar — do **not** leave it world-readable.
+- Set file permissions tightly: `chmod 750 /opt/olt_checker.py` and restrict ownership to `root:www-data` or similar — do **not** leave it world-readable.
 - Never commit this file to a public/shared Git repo with real passwords in it.
 - `get_olt_signal.php` builds a shell command from a GET parameter. It currently validates `username` with a regex (`^[a-zA-Z0-9_\-]+$`) before passing it to `escapeshellarg()` — **keep this validation in place**; do not relax it, since this endpoint executes a shell command.
 - Consider moving DB/OLT credentials into a separate config file outside the web root, or into environment variables, instead of leaving them inline in the script.
@@ -51,14 +51,14 @@ apt-get install -y build-essential libssl-dev libffi-dev python3-dev
 
 | Step | File | Target Directory (WinSCP) | Purpose |
 |------|------|---------------------------|---------|
-| 1 | `test_olt.py` | `/opt/` | Python backend — DB lookup + SSH to OLTs |
+| 1 | `olt_checker.py` | `/opt/` | Python backend — DB lookup + SSH to OLTs |
 | 2 | `get_olt_signal.php` | `/var/www/html/` | PHP bridge between frontend and Python |
 | 3 | `olt-signal.php` | `/zalpro-optimization/` | Frontend widget (HTML/JS/UI box) |
 | 4 | `profile.php` (edit) | `/var/www/html/application/views/themes/legacy/admin_portal/users/` | Include point for the widget |
 
 ---
 
-## Step 1 — Python Backend (`/opt/test_olt.py`)
+## Step 1 — Python Backend (`/opt/olt_checker.py`)
 
 Create the file and paste your script contents. Key things to configure at the top of the file:
 
@@ -93,14 +93,14 @@ DB_NAME = "zalpro"
 - `find_mac_across_olts()` — loops through `OLT_LIST` until a match is found.
 - CLI usage:
   ```bash
-  python3 /opt/test_olt.py --user <username> --json
-  python3 /opt/test_olt.py --mac <mac_address> --json
+  python3 /opt/olt_checker.py --user <username> --json
+  python3 /opt/olt_checker.py --mac <mac_address> --json
   ```
 
 **After uploading:**
 
 ```bash
-chmod 755 /opt/test_olt.py
+chmod 755 /opt/olt_checker.py
 ```
 
 > Tip: Since this file contains credentials, `chmod 750` with owner `root` (or the web server user only) is safer than `755` if other local users have shell access.
@@ -115,7 +115,7 @@ Bridges the web frontend to the Python backend:
 - Validates the username against `^[a-zA-Z0-9_\-]+$` before use — **do not remove this check**.
 - Runs:
   ```php
-  $cmd = "python3 /opt/test_olt.py --user " . escapeshellarg($user) . " --json 2>&1";
+  $cmd = "python3 /opt/olt_checker.py --user " . escapeshellarg($user) . " --json 2>&1";
   ```
 - Returns the JSON output directly to the browser.
 
@@ -164,8 +164,8 @@ echo '</div>';
    ```
 2. **Test Python CLI directly:**
    ```bash
-   python3 /opt/test_olt.py --user <username>
-   python3 /opt/test_olt.py --user <username> --json
+   python3 /opt/olt_checker.py --user <username>
+   python3 /opt/olt_checker.py --user <username> --json
    ```
 3. **Test PHP bridge directly (browser or curl):**
    ```
@@ -183,12 +183,12 @@ echo '</div>';
 | `"User MAC not found in DB"` | Run the `radpostauth` query manually for that username |
 | `"MAC ... not found on any active OLT"` | Confirm the OLT SSH IP/credentials in `OLT_LIST`; verify the ONT is actually online |
 | Python import errors | Re-run `pip3 install paramiko pymysql` |
-| Permission denied running script | `chmod 755 /opt/test_olt.py` (or `750` — see security note above) |
+| Permission denied running script | `chmod 755 /opt/olt_checker.py` (or `750` — see security note above) |
 | SSH connects but no MAC match | Huawei/VSOL CLI output format may differ by firmware version — check the regex patterns in `query_huawei_olt` / `query_vsol_olt` match your device's actual command output |
 
 **Quick diagnostic command:**
 ```bash
-python3 /opt/test_olt.py --user <username>
+python3 /opt/olt_checker.py --user <username>
 ```
 
 ---
@@ -196,7 +196,7 @@ python3 /opt/test_olt.py --user <username>
 ## 📋 Deployment Checklist
 
 - [ ] Python + pip libraries installed (`paramiko`, `pymysql`)
-- [ ] `test_olt.py` uploaded to `/opt/`, credentials filled in, permissions locked down
+- [ ] `olt_checker.py` uploaded to `/opt/`, credentials filled in, permissions locked down
 - [ ] `get_olt_signal.php` uploaded to `/var/www/html/`
 - [ ] `olt-signal.php` uploaded to `/zalpro-optimization/`
 - [ ] Include block added to `profile.php`
