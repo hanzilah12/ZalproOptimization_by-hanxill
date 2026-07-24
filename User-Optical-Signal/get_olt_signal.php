@@ -13,7 +13,7 @@ if (!preg_match('/^[a-zA-Z0-9_\-]+$/',$user)) {
     exit;
 }
 
-$cmd = "python3 /opt/test_olt.py --user " . escapeshellarg($user) . " --json 2>&1";
+$cmd = "python3 /opt/olt_checker.py --user " . escapeshellarg($user) . " --json 2>&1";
 $output = shell_exec($cmd);
 
 if ($output) {
