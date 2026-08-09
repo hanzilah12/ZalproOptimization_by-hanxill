@@ -199,7 +199,7 @@ $username = htmlspecialchars($user->username);
 <script>
 (function() {
     const USERNAME   = "<?= $username ?>";
-    const WS_URL     = "ws://103.170.179.155:8081?username=" + encodeURIComponent(USERNAME);
+    const WS_URL     = "ws://103.111.39.174:8081?username=" + encodeURIComponent(USERNAME);
     const MAX_PTS    = 60;
     const DURATION   = 120; // 2 minutes in seconds
 
